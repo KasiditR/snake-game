@@ -36,9 +36,11 @@ namespace SnakeGame.Manager
         {
             StartCoroutine(InitializeRoutine());
         }
+
         private IEnumerator InitializeRoutine()
         {
             _isInit = false;
+            CoreGameManager.Instance.GameManager = this;
             yield return StartCoroutine(SpawnPlayerRoutine());
             yield return StartCoroutine(SpawnEnemyRoutine());
             yield return StartCoroutine(SpawnAdventurerRoutine());
@@ -64,6 +66,7 @@ namespace SnakeGame.Manager
             {
                 _spawnTimer = CoreGameManager.Instance.GameConfig.SpawnTimeInterval;
                 StartCoroutine(SpawnEnemyRoutine());
+                StartCoroutine(SpawnAdventurerRoutine());
             }
         }
 
@@ -165,7 +168,7 @@ namespace SnakeGame.Manager
             player.transform.position = position;
             AdventurerCharacter adventurer = SpawnAdventurer(position);
             _adventureCount++;
-            player.AddMemberParty(adventurer);
+            player.PartyHandler.AddMember(adventurer);
             adventurer.SetLeader();
             return player;
         }

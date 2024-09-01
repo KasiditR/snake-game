@@ -10,6 +10,8 @@ GameObject:
   m_Component:
   - component: {fileID: 4197652495354527266}
   - component: {fileID: 1113648155090080954}
+  - component: {fileID: 2002948815006391364}
+  - component: {fileID: 8596586814282443663}
   - component: {fileID: 6764453399068169485}
   - component: {fileID: 3010343652843330783}
   m_Layer: 8
@@ -47,7 +49,33 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _timeToMove: 0.25
+  _playerCollisionHandler: {fileID: 8596586814282443663}
+  _partyHandler: {fileID: 2002948815006391364}
+--- !u!114 &2002948815006391364
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2271120008087334514}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c3aa0f3f858e39640b93c9b89ac546a3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
   _partyMembers: []
+--- !u!114 &8596586814282443663
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2271120008087334514}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3a076e1af4d9b49469d10da41037a8c4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!58 &6764453399068169485
 CircleCollider2D:
   m_ObjectHideFlags: 0

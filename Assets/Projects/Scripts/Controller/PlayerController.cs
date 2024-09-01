@@ -1,9 +1,5 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using UnityEngine;
 using Random = UnityEngine.Random;
-using SnakeGame.Character;
 using SnakeGame.Manager;
 using SnakeGame.Interface;
 
@@ -12,13 +8,11 @@ namespace SnakeGame.Controller
     public class PlayerController : MonoBehaviour, IPausable
     {
         [SerializeField] private float _timeToMove;
-        [SerializeField] private List<AdventurerCharacter> _partyMembers;
+        [SerializeField] private PlayerCollisionHandler _playerCollisionHandler;
+        [SerializeField] private PartyHandler _partyHandler;
         private float _lastDirectionChangeTime;
         private float _moveElapsedTime;
-        private float _partyMoveElapsedTime;
-        private int _currentPartyIndex;
         private bool _isMoving;
-        private bool _isPartyMoving;
         private bool _isInit;
         private bool _isPause;
         private GridTile _grid;
@@ -26,7 +20,16 @@ namespace SnakeGame.Controller
         private Vector3 _origPos;
         private Vector3 _targetPos;
         private Vector3 _direction;
-        private List<Vector3> _collectPos = new List<Vector3>();
+
+        public float TimeToMove { get => _timeToMove; set => _timeToMove = value; }
+        public PartyHandler PartyHandler { get => _partyHandler; }
+        public bool IsPause { get => _isPause; set => _isPause = value; }
+
+        private void Start()
+        {
+            _partyHandler.Initialize(this);
+            _playerCollisionHandler.Initialize(this, _partyHandler);
+        }
 
         public void Initialize(GameManager gameManager)
         {
@@ -34,7 +37,6 @@ namespace SnakeGame.Controller
             _grid = _gameManager.Grid;
             _direction = Vector3.down;
             _isInit = true;
-            AdjustMovementSpeed();
         }
 
         private void OnEnable()
@@ -49,12 +51,7 @@ namespace SnakeGame.Controller
 
         private void Update()
         {
-            if (_isPause)
-            {
-                return;
-            }
-
-            if (!_isInit)
+            if (_isPause || !_isInit)
             {
                 return;
             }
@@ -67,9 +64,9 @@ namespace SnakeGame.Controller
             }
             else
             {
-                if (_isPartyMoving)
+                if (_partyHandler.IsPartyMoving)
                 {
-                    MoveParty();
+                    _partyHandler.MoveParty();
                 }
                 else
                 {
@@ -122,104 +119,11 @@ namespace SnakeGame.Controller
             if (time >= 1f)
             {
                 _isMoving = false;
-                StartPartyMove();
+                _partyHandler.StartPartyMove();
             }
         }
 
-        private void StartPartyMove()
-        {
-            if (_partyMembers.Count > 0)
-            {
-                _isPartyMoving = true;
-                _partyMoveElapsedTime = 0f;
-                _currentPartyIndex = 0;
-                _collectPos = _partyMembers.Select(x => x.transform.position).ToList();
-            }
-        }
-
-        private void MoveParty()
-        {
-            _partyMoveElapsedTime += Time.deltaTime;
-            float time = Mathf.Clamp01(_partyMoveElapsedTime / 0.05f);
-            Vector3 startPos = _partyMembers[_currentPartyIndex].transform.position;
-            Vector3 targetPos = _currentPartyIndex == 0 ? this.transform.position : _collectPos[_currentPartyIndex - 1];
-            Vector3 dir = (targetPos - startPos);
-            _partyMembers[_currentPartyIndex].SetDirection(dir.normalized);
-            _partyMembers[_currentPartyIndex].transform.position = Vector3.Lerp(startPos, targetPos, time);
-
-            if (_currentPartyIndex == 0)
-            {
-                _partyMembers[0].SetLeader();
-            }
-            else
-            {
-                _partyMembers[_currentPartyIndex].SetMember();
-            }
-
-            if (time >= 1f)
-            {
-                _partyMoveElapsedTime = 0f;
-                _currentPartyIndex++;
-
-                if (_currentPartyIndex >= _partyMembers.Count)
-                {
-                    _isPartyMoving = false;
-                }
-            }
-        }
-
-        public void AddMemberParty(AdventurerCharacter adventurer)
-        {
-            if (adventurer.IsDie)
-            {
-                return;
-            }
-
-            if (!_partyMembers.Contains(adventurer))
-            {
-                _partyMembers.Add(adventurer);
-                adventurer.OnDie += OnAdventurerDie;
-                AdjustMovementSpeed();
-            }
-        }
-
-        private void OnAdventurerDie(BaseCharacter character)
-        {
-            if (_partyMembers.Contains(character))
-            {
-                _partyMembers.Remove(character as AdventurerCharacter);
-                AdjustMovementSpeed();
-            }
-
-            character.OnDie -= OnAdventurerDie;
-
-            if (_partyMembers.Count <= 0)
-            {
-                _isPause = true;
-                this._gameManager.GameOver();
-            }
-        }
-
-        private void OnTriggerEnter2D(Collider2D other)
-        {
-            if (other.gameObject.TryGetComponent<AdventurerCharacter>(out AdventurerCharacter adventurer))
-            {
-                AddMemberParty(adventurer);
-            }
-
-            if (other.gameObject.CompareTag(TagName.WALL))
-            {
-                HitWall();
-            }
-        }
-
-        private void HitWall()
-        {
-            _partyMembers[0].DieImmediate();
-            ChangeDirection();
-        }
-
-        private void ChangeDirection()
+        public void ChangeDirection()
         {
             if (!_isInit)
             {
@@ -246,13 +150,6 @@ namespace SnakeGame.Controller
             {
                 ChangeDirection();
             }
-        }
-
-        private void AdjustMovementSpeed()
-        {
-            int partySize = Mathf.Max(1, _partyMembers.Count);
-            Vector2 minMaxSpeed = CoreGameManager.Instance.GameConfig.MinMaxSpeed;
-            _timeToMove = Mathf.Clamp(minMaxSpeed.y / partySize, minMaxSpeed.x, minMaxSpeed.y);
         }
 
         public void OnPause()
